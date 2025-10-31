@@ -1,0 +1,163 @@
+# 依赖目录
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+PIPFILE.lock
+.venv/
+venv/
+ENV/
+env/
+
+# 虚拟环境和环境变量
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.venv
+venv/
+ENV/
+
+# IDE和编辑器
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# 日志文件
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 运行时数据
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# 覆盖率报告
+coverage/
+*.lcov
+.nyc_output/
+
+# 临时文件
+.tmp/
+temp/
+tmp/
+*.tmp
+
+# 构建输出
+dist/
+build/
+out/
+target/
+
+# 测试
+coverage/
+.coverage
+.pytest_cache/
+.tox/
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# 文档生成
+docs/_build/
+.sphinx/
+
+# 包管理
+.npm
+.yarn-integrity
+.parcel-cache/
+
+# 操作系统
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# 特定于项目的临时文件
+*.orig
+*.bak
+*.backup
+*.old
+*.save
+
+# 本地配置文件
+config.local.*
+settings.local.*
+local.config.*
+
+# 数据库
+*.db
+*.sqlite
+*.sqlite3
+
+# 缓存
+.cache/
+.npm
+.eslintcache
+.stylelintcache
+
+# 部署
+.vercel
+.netlify
+.output
+
+# 特定框架
+.next/
+.nuxt/
+.vuepress/dist
+.serverless
+.fusebox/
+.dynamodb/
+
+# 压缩文件
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
