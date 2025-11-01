@@ -6,12 +6,13 @@
     <title>童话故事集</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=EB+Garamond:ital,wght@0,400;0,700;1,400&display=swap');
 
         body {
             font-family: 'EB Garamond', serif;
-            background-color: #fdf6e3; /* A soft, parchment-like color */
+            background-color: #fdf6e3;
             background-image: url('https://www.toptal.com/designers/subtlepatterns/uploads/old_mathematics.png');
             background-attachment: fixed;
             overflow: hidden;
@@ -29,34 +30,34 @@
         }
 
         #story-list-container {
-            background-color: rgba(245, 245, 220, 0.5); /* Semi-transparent beige */
+            background-color: rgba(245, 245, 220, 0.5);
             backdrop-filter: blur(4px);
-            border-right: 1px solid rgba(139, 69, 19, 0.2); /* Faint brown border */
+            border-right: 1px solid rgba(139, 69, 19, 0.2);
         }
 
         .story-list-item {
             border-radius: 8px;
             font-size: 1.1rem;
-            color: #5d4037; /* A deep brown */
+            color: #5d4037;
             transition: all 0.3s ease;
             border: 1px solid transparent;
         }
 
         .story-list-item:hover {
-            background-color: rgba(218, 165, 32, 0.2); /* Faint goldenrod */
+            background-color: rgba(218, 165, 32, 0.2);
             transform: translateX(5px);
             border-color: rgba(218, 165, 32, 0.4);
         }
 
         .story-list-item.active {
-            background-color: rgba(218, 165, 32, 0.4); /* Goldenrod */
+            background-color: rgba(218, 165, 32, 0.4);
             color: #4e342e;
             font-weight: bold;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         #story-content-wrapper {
-            background: rgba(253, 246, 227, 0.85); /* Slightly more opaque parchment */
+            background: rgba(253, 246, 227, 0.85);
             backdrop-filter: blur(4px);
             border-radius: 12px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
@@ -69,7 +70,6 @@
             transition: opacity 0.4s ease-in-out;
         }
 
-        /* Custom scrollbar for a more thematic feel */
         #story-content-wrapper::-webkit-scrollbar {
             width: 10px;
         }
@@ -78,7 +78,7 @@
             border-radius: 5px;
         }
         #story-content-wrapper::-webkit-scrollbar-thumb {
-            background-color: rgba(139, 69, 19, 0.4); /* SaddleBrown, semi-transparent */
+            background-color: rgba(139, 69, 19, 0.4);
             border-radius: 5px;
             border: 2px solid transparent;
             background-clip: content-box;
@@ -87,7 +87,6 @@
             background-color: rgba(139, 69, 19, 0.6);
         }
 
-        /* Styles for the content loaded from story files */
         .story-header {
             text-align: center;
             margin-bottom: 2rem;
@@ -111,7 +110,6 @@
             font-size: 1.1rem;
         }
 
-        /* 故事分组样式 */
         .story-group {
             border-radius: 8px;
             overflow: hidden;
@@ -150,85 +148,86 @@
             border-radius: 12px;
         }
 
-        .story-group-toggle {
-            color: #8d6e63;
-            font-size: 1.25rem;
-            transition: transform 0.3s ease;
-            line-height: 1;
-            width: 24px;
-            text-align: center;
-        }
-
-        .story-group-toggle.expanded {
-            transform: rotate(0deg);
-        }
-
-        .story-group-toggle.collapsed {
-            transform: rotate(-90deg);
-        }
-
         .story-group-content {
-            max-height: 1000px;
+            max-height: 0;
             overflow: hidden;
-            transition: max-height 0.4s ease-in-out, opacity 0.3s ease;
-            opacity: 1;
+            transition: max-height 0.3s ease-out;
+            background-color: rgba(255, 255, 255, 0.3);
         }
 
-        .story-group-content.collapsed {
-            max-height: 0;
-            opacity: 0;
+        .story-group.expanded .story-group-content {
+            max-height: 1000px;
+            transition: max-height 0.3s ease-in;
         }
 
         .story-group-list {
-            padding: 0.5rem 0.25rem 0.25rem 0.25rem;
+            padding: 0.5rem;
+            display: grid;
+            gap: 0.25rem;
         }
 
-        /* 搜索框样式增强 */
-        #story-search {
-            transition: all 0.2s ease;
+        .story-group-list .story-list-item {
+            margin: 0;
         }
 
-        #story-search:focus {
-            box-shadow: 0 0 0 3px rgba(218, 165, 32, 0.2);
+        .chevron {
+            transition: transform 0.3s ease;
         }
 
-        /* 无搜索结果提示 */
-        .no-search-results {
-            text-align: center;
-            padding: 2rem 1rem;
-            color: #8d6e63;
-            font-style: italic;
+        .story-group.expanded .chevron {
+            transform: rotate(180deg);
         }
 
+        .loading-spinner {
+            border: 3px solid rgba(218, 165, 32, 0.3);
+            border-top: 3px solid rgba(218, 165, 32, 1);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background-color: #fee;
+            color: #c33;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid #fcc;
+            margin: 1rem 0;
+        }
+
+        .search-highlight {
+            background-color: rgba(255, 235, 59, 0.4);
+            font-weight: bold;
+        }
     </style>
 </head>
 <body class="text-stone-800">
-
     <div class="flex flex-col h-screen">
         <header class="text-center py-6 px-8 z-10 relative">
             <h1 class="main-title text-5xl md:text-6xl font-bold text-stone-800/90">我的童话故事集</h1>
-            <div class="absolute top-1/2 right-8 -translate-y-1/2 flex gap-3">
-                <button id="github-settings-btn" class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow-md transition-all duration-200 font-medium">
-                    ☁️ 云存储设置
-                </button>
-                <button id="ai-generate-btn" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg shadow-md transition-all duration-200 font-medium">
-                    🤖 AI 生成故事
-                </button>
-            </div>
+            <p class="text-stone-600 mt-2">精选童话故事，带您进入奇幻世界</p>
         </header>
 
         <div class="flex flex-1 overflow-hidden px-4 pb-4 md:px-8 md:pb-8">
             <aside id="story-list-container" class="w-1/3 p-6 overflow-y-auto rounded-l-lg">
                 <h2 class="story-list-title text-stone-700 mb-6">故事列表</h2>
 
-                <!-- 搜索框 -->
                 <div class="mb-4">
                     <input type="text" id="story-search" class="w-full px-3 py-2 border border-stone-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm" placeholder="🔍 搜索故事...">
                 </div>
 
-                <!-- 故事分组容器 -->
                 <div id="story-groups-container" class="space-y-4">
-                    <!-- 分组将动态生成在这里 -->
+                    <div id="loading-indicator" class="text-center">
+                        <div class="loading-spinner"></div>
+                        <p class="text-stone-600 mt-2">正在加载故事...</p>
+                    </div>
                 </div>
             </aside>
 
@@ -244,1199 +243,250 @@
         </div>
     </div>
 
-    <!-- AI 生成故事模态框 -->
-    <div id="ai-generate-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-        <div class="bg-white rounded-lg shadow-2xl w-full max-w-4xl mx-4 p-6 max-h-[90vh] overflow-hidden flex flex-col">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-2xl font-bold text-stone-800">AI 生成故事</h2>
-                <button id="close-generate-btn" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
-            </div>
-
-            <div class="flex space-x-4 flex-1 overflow-hidden">
-                <!-- 左侧：输入区域 -->
-                <div class="w-1/3 flex flex-col space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-stone-700 mb-2">故事主题/提示词</label>
-                        <textarea id="story-prompt" rows="6" class="w-full px-3 py-2 border border-stone-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none" placeholder="例如：一只小兔子在森林里的冒险..."></textarea>
-                        <div class="mt-2 flex flex-wrap gap-2">
-                            <button class="prompt-template text-xs px-2 py-1 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded" data-prompt="一只小兔子在森林里的冒险，它遇到了一只友善的老猫头鹰学会了勇敢">🐰 小动物冒险</button>
-                            <button class="prompt-template text-xs px-2 py-1 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded" data-prompt="一个神奇的魔法花园，里面有会说话的植物和友善的小精灵">🌸 魔法世界</button>
-                            <button class="prompt-template text-xs px-2 py-1 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded" data-prompt="一只小鸟学会了飞翔，它帮助其他小动物解决了困难，明白了友谊的珍贵">🐦 友谊与成长</button>
-                            <button class="prompt-template text-xs px-2 py-1 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded" data-prompt="在一个古老的城堡里，住着一位善良的小公主，她用智慧化解了一场危机">👸 公主故事</button>
-                            <button class="prompt-template text-xs px-2 py-1 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded" data-prompt="一条小鱼游向大海深处，遇到各种海洋生物，学会了坚持不懈">🐟 海洋冒险</button>
-                        </div>
-                    </div>
-
-                    <div>
-                        <div class="flex justify-between items-center mb-2">
-                            <label class="block text-sm font-medium text-stone-700">选择模型</label>
-                            <button id="refresh-models-btn" class="text-xs text-amber-600 hover:text-amber-700">🔄 刷新</button>
-                        </div>
-                        <select id="model-select" class="w-full px-3 py-2 border border-stone-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500">
-                            <option value="">请先配置 API</option>
-                        </select>
-                    </div>
-
-                    <button id="generate-btn" class="w-full bg-amber-500 hover:bg-amber-600 text-white py-2 px-4 rounded-md transition duration-200 font-medium">
-                        ✨ 生成故事
-                    </button>
-
-                    <div class="text-xs text-gray-500 space-y-1">
-                        <p><strong>提示：</strong></p>
-                        <p>• 描述具体的故事场景</p>
-                        <p>• 指定主角和性格</p>
-                        <p>• 说明想要的情节发展</p>
-                    </div>
-                </div>
-
-                <!-- 右侧：预览区域 -->
-                <div class="w-2/3 flex flex-col">
-                    <div class="flex justify-between items-center mb-2">
-                        <label class="block text-sm font-medium text-stone-700">生成结果</label>
-                        <div id="generation-status" class="hidden">
-                            <span class="text-sm text-amber-600 animate-pulse">生成中...</span>
-                        </div>
-                    </div>
-                    <textarea id="story-result" rows="20" class="flex-1 w-full px-3 py-2 border border-stone-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none" placeholder="生成的故事将在这里显示..."></textarea>
-                    <div class="flex space-x-3 mt-4">
-                        <button id="save-story-btn" class="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-md transition duration-200 font-medium">
-                            💾 保存故事
-                        </button>
-                        <button id="cancel-btn" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-md transition duration-200 font-medium">
-                            取消
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- AI 设置模态框 -->
-    <div id="ai-settings-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-        <div class="bg-white rounded-lg shadow-2xl w-full max-w-md mx-4 p-6">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-2xl font-bold text-stone-800">AI 设置</h2>
-                <button id="close-settings-btn" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
-            </div>
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-stone-700 mb-2">API Base URL</label>
-                    <input type="text" id="api-baseurl" class="w-full px-3 py-2 border border-stone-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500" placeholder="https://api.openai.com">
-                    <p class="text-xs text-gray-500 mt-1">支持 OpenAI、OpenRouter、Ollama 等兼容 API</p>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-stone-700 mb-2">API Key</label>
-                    <input type="password" id="api-key" class="w-full px-3 py-2 border border-stone-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500" placeholder="sk-...">
-                    <p class="text-xs text-gray-500 mt-1">密钥仅存储在浏览器本地</p>
-                </div>
-                <div class="flex space-x-3">
-                    <button id="save-settings-btn" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white py-2 px-4 rounded-md transition duration-200 font-medium">保存</button>
-                    <button id="clear-settings-btn" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-md transition duration-200 font-medium">清除</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- GitHub 云存储设置模态框 -->
-    <div id="github-settings-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-        <div class="bg-white rounded-lg shadow-2xl w-full max-w-md mx-4 p-6">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-2xl font-bold text-stone-800">GitHub 云存储设置</h2>
-                <button id="close-github-settings-btn" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
-            </div>
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-stone-700 mb-2">GitHub 用户名</label>
-                    <input type="text" id="github-username" class="w-full px-3 py-2 border border-stone-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="geliya23" value="geliya23">
-                    <p class="text-xs text-gray-500 mt-1">你的GitHub用户名</p>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-stone-700 mb-2">Personal Access Token</label>
-                    <input type="password" id="github-token" class="w-full px-3 py-2 border border-stone-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="ghp_...">
-                    <p class="text-xs text-gray-500 mt-1">
-                        需要 repo 权限
-                        <a href="https://github.com/settings/tokens/new?scopes=repo" target="_blank" class="text-blue-600 hover:underline">点击获取</a>
-                    </p>
-                </div>
-                <div class="flex space-x-3">
-                    <button id="save-github-settings-btn" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-md transition duration-200 font-medium">保存</button>
-                    <button id="clear-github-settings-btn" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-md transition duration-200 font-medium">清除</button>
-                </div>
-                <div id="github-status" class="text-sm text-gray-600 hidden">
-                    <p>状态检查中...</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Toast 通知容器 -->
-    <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2">
-        <!-- Toast 消息将动态插入这里 -->
-    </div>
-
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const storyListElement = document.getElementById('story-list');
-            const storyContentElement = document.getElementById('story-content');
-            const storySearchInput = document.getElementById('story-search');
-            const storyGroupsContainer = document.getElementById('story-groups-container');
-
-            // 故事分组数据存储
-            let allStories = [];
-            let useGitHub = false;
-            let filteredStories = [];
-
-            // AI 功能相关 DOM 元素
-            const aiGenerateBtn = document.getElementById('ai-generate-btn');
-            const aiSettingsModal = document.getElementById('ai-settings-modal');
-            const aiGenerateModal = document.getElementById('ai-generate-modal');
-            const closeSettingsBtn = document.getElementById('close-settings-btn');
-            const closeGenerateBtn = document.getElementById('close-generate-btn');
-            const saveSettingsBtn = document.getElementById('save-settings-btn');
-            const clearSettingsBtn = document.getElementById('clear-settings-btn');
-            const apiBaseurlInput = document.getElementById('api-baseurl');
-            const apiKeyInput = document.getElementById('api-key');
-            const storyPromptInput = document.getElementById('story-prompt');
-            const modelSelect = document.getElementById('model-select');
-            const generateBtn = document.getElementById('generate-btn');
-            const refreshModelsBtn = document.getElementById('refresh-models-btn');
-            const storyResultTextarea = document.getElementById('story-result');
-            const saveStoryBtn = document.getElementById('save-story-btn');
-            const cancelBtn = document.getElementById('cancel-btn');
-            const generationStatus = document.getElementById('generation-status');
-
-            // GitHub 云存储相关 DOM 元素
-            const githubSettingsBtn = document.getElementById('github-settings-btn');
-            const githubSettingsModal = document.getElementById('github-settings-modal');
-            const closeGithubSettingsBtn = document.getElementById('close-github-settings-btn');
-            const saveGithubSettingsBtn = document.getElementById('save-github-settings-btn');
-            const clearGithubSettingsBtn = document.getElementById('clear-github-settings-btn');
-            const githubUsernameInput = document.getElementById('github-username');
-            const githubTokenInput = document.getElementById('github-token');
-            const githubStatusDiv = document.getElementById('github-status');
-
-            // Toast 通知相关 DOM 元素
-            const toastContainer = document.getElementById('toast-container');
-
-            // 本地存储管理
-            const API_CONFIG_KEY = 'ai_story_api_config';
-            const GITHUB_CONFIG_KEY = 'github_token_config';
-            const SELECTED_MODEL_KEY = 'selected_model_id';
-
-            function saveApiConfig(baseurl, apikey) {
-                localStorage.setItem(API_CONFIG_KEY, JSON.stringify({ baseurl, apikey }));
-            }
-
-            function loadApiConfig() {
-                const config = localStorage.getItem(API_CONFIG_KEY);
-                if (config) {
-                    try {
-                        return JSON.parse(config);
-                    } catch (e) {
-                        console.error('解析 API 配置失败:', e);
-                        return null;
-                    }
-                }
-                return null;
-            }
-
-            function clearApiConfig() {
-                localStorage.removeItem(API_CONFIG_KEY);
-                apiBaseurlInput.value = '';
-                apiKeyInput.value = '';
-                modelSelect.innerHTML = '<option value="">请先配置 API</option>';
-            }
-
-            // 模型选择管理
-            function saveSelectedModel(modelId) {
-                localStorage.setItem(SELECTED_MODEL_KEY, modelId);
-            }
-
-            function getSelectedModel() {
-                return localStorage.getItem(SELECTED_MODEL_KEY);
-            }
-
-            function restoreSelectedModel() {
-                const savedModelId = getSelectedModel();
-                if (savedModelId && modelSelect.querySelector(`option[value="${savedModelId}"]`)) {
-                    modelSelect.value = savedModelId;
-                }
-            }
-
-            // ============ GitHub API 客户端 ============
-
-            class GitHubAPI {
-                constructor(token, username) {
-                    this.token = token;
-                    this.username = username;
-                    this.baseUrl = 'https://api.github.com';
-                    this.repoName = 'fairy-tales-geliya23';
-                }
-
-                // 保存Token到localStorage
-                saveToken(token) {
-                    localStorage.setItem(GITHUB_CONFIG_KEY, JSON.stringify({ token, username: this.username }));
-                }
-
-                // 从localStorage加载Token
-                static loadToken() {
-                    const config = localStorage.getItem(GITHUB_CONFIG_KEY);
-                    if (config) {
-                        try {
-                            return JSON.parse(config);
-                        } catch (e) {
-                            console.error('解析 GitHub Token 失败:', e);
-                            return null;
-                        }
-                    }
-                    return null;
-                }
-
-                // 清除Token
-                static clearToken() {
-                    localStorage.removeItem(GITHUB_CONFIG_KEY);
-                }
-
-                // 获取请求头
-                getHeaders() {
-                    return {
-                        'Authorization': `token ${this.token}`,
-                        'Accept': 'application/vnd.github.v3+json',
-                        'Content-Type': 'application/json'
-                    };
-                }
-
-                // 验证Token有效性
-                async validateToken() {
-                    try {
-                        const response = await fetch(`${this.baseUrl}/user`, {
-                            headers: this.getHeaders()
-                        });
-                        return response.ok;
-                    } catch (error) {
-                        console.error('Token验证失败:', error);
-                        return false;
-                    }
-                }
-
-                // 检查仓库是否存在
-                async checkRepository() {
-                    try {
-                        const response = await fetch(`${this.baseUrl}/repos/${this.username}/${this.repoName}`, {
-                            headers: this.getHeaders()
-                        });
-                        if (response.status === 404) {
-                            return false;
-                        }
-                        if (!response.ok) {
-                            throw new Error(`检查仓库失败: ${response.status}`);
-                        }
-                        return true;
-                    } catch (error) {
-                        console.error('检查仓库时出错:', error);
-                        throw error;
-                    }
-                }
-
-                // 创建仓库
-                async createRepository() {
-                    try {
-                        const response = await fetch(`${this.baseUrl}/user/repos`, {
-                            method: 'POST',
-                            headers: this.getHeaders(),
-                            body: JSON.stringify({
-                                name: this.repoName,
-                                description: '我的童话故事集 - 自动生成和管理的故事网站',
-                                private: false,
-                                has_issues: true,
-                                has_projects: false,
-                                has_wiki: false,
-                                auto_init: false
-                            })
-                        });
-
-                        if (!response.ok) {
-                            const error = await response.json();
-                            throw new Error(`创建仓库失败: ${response.status} - ${error.message}`);
-                        }
-
-                        return await response.json();
-                    } catch (error) {
-                        console.error('创建仓库时出错:', error);
-                        throw error;
-                    }
-                }
-
-                // 初始化仓库基础文件
-                async initializeRepository() {
-                    try {
-                        // 创建stories.json
-                        const storiesContent = JSON.stringify([], null, 2);
-                        await this.createOrUpdateFile('stories.json', storiesContent, '初始化故事列表');
-
-                        // 创建story目录占位文件
-                        const readmeContent = '# 故事目录\n\n这里存放所有的故事文件。';
-                        await this.createOrUpdateFile('story/README.md', readmeContent, '初始化故事目录');
-
-                        return true;
-                    } catch (error) {
-                        console.error('初始化仓库时出错:', error);
-                        throw error;
-                    }
-                }
-
-                // 创建或更新文件
-                async createOrUpdateFile(path, content, message) {
-                    try {
-                        // 先检查文件是否已存在
-                        let sha = null;
-                        try {
-                            const getResponse = await fetch(`${this.baseUrl}/repos/${this.username}/${this.repoName}/contents/${path}`, {
-                                headers: this.getHeaders()
-                            });
-                            if (getResponse.ok) {
-                                const fileData = await getResponse.json();
-                                sha = fileData.sha;
-                            }
-                        } catch (e) {
-                            // 文件不存在，继续创建
-                        }
-
-                        const response = await fetch(`${this.baseUrl}/repos/${this.username}/${this.repoName}/contents/${path}`, {
-                            method: 'PUT',
-                            headers: this.getHeaders(),
-                            body: JSON.stringify({
-                                message: message,
-                                content: btoa(unescape(encodeURIComponent(content))),
-                                sha: sha
-                            })
-                        });
-
-                        if (!response.ok) {
-                            const error = await response.json();
-                            throw new Error(`文件操作失败: ${response.status} - ${error.message}`);
-                        }
-
-                        return await response.json();
-                    } catch (error) {
-                        console.error(`文件操作出错 (${path}):`, error);
-                        throw error;
-                    }
-                }
-
-                // 获取文件内容
-                async getFile(path) {
-                    try {
-                        const response = await fetch(`${this.baseUrl}/repos/${this.username}/${this.repoName}/contents/${path}`, {
-                            headers: this.getHeaders()
-                        });
-
-                        if (!response.ok) {
-                            if (response.status === 404) {
-                                return null;
-                            }
-                            throw new Error(`获取文件失败: ${response.status}`);
-                        }
-
-                        const data = await response.json();
-                        return {
-                            content: decodeURIComponent(escape(atob(data.content))),
-                            sha: data.sha
-                        };
-                    } catch (error) {
-                        console.error(`获取文件时出错 (${path}):`, error);
-                        throw error;
-                    }
-                }
-
-                // 获取故事列表
-                async getStoriesList() {
-                    try {
-                        const fileData = await this.getFile('stories.json');
-                        if (!fileData) {
-                            return [];
-                        }
-                        return JSON.parse(fileData.content);
-                    } catch (error) {
-                        console.error('获取故事列表失败:', error);
-                        throw error;
-                    }
-                }
-
-                // 保存故事文件
-                async saveStory(title, subtitle, content) {
-                    try {
-                        const timestamp = Date.now();
-                        const fileName = `ai_generated_story_${timestamp}.md`;
-                        const markdownContent = `# ${title}\n\n${subtitle}\n\n${content}`;
-                        const path = `story/${fileName}`;
-
-                        await this.createOrUpdateFile(path, markdownContent, `添加故事: ${title}`);
-
-                        // 更新stories.json
-                        const stories = await this.getStoriesList();
-                        stories.push({
-                            title: title,
-                            file: fileName
-                        });
-                        await this.createOrUpdateFile('stories.json', JSON.stringify(stories, null, 2), `更新故事列表: 添加 ${title}`);
-
-                        return {
-                            fileName: fileName,
-                            path: path
-                        };
-                    } catch (error) {
-                        console.error('保存故事失败:', error);
-                        throw error;
-                    }
-                }
-            }
-
-            // 模态框控制
-            function showModal(modal) {
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
-            }
-
-            function hideModal(modal) {
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-            }
-
-            // Toast 通知函数
-            function showToast(message, type = 'success', duration = 5000) {
-                const toast = document.createElement('div');
-                const bgColor = type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : type === 'warning' ? 'bg-yellow-500' : 'bg-blue-500';
-                const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️';
-
-                toast.className = `${bgColor} text-white px-6 py-4 rounded-lg shadow-lg transform transition-all duration-300 ease-in-out max-w-sm`;
-                toast.style.transform = 'translateX(100%)';
-                toast.innerHTML = `
-                    <div class="flex items-start gap-3">
-                        <span class="text-2xl">${icon}</span>
-                        <div class="flex-1">
-                            <p class="font-medium">${message}</p>
-                        </div>
-                        <button class="text-white hover:text-gray-200 transition-colors" onclick="this.parentElement.parentElement.remove()">
-                            &times;
-                        </button>
-                    </div>
-                `;
-
-                toastContainer.appendChild(toast);
-
-                // 动画显示
-                setTimeout(() => {
-                    toast.style.transform = 'translateX(0)';
-                }, 100);
-
-                // 自动移除
-                setTimeout(() => {
-                    toast.style.transform = 'translateX(100%)';
-                    setTimeout(() => {
-                        if (toast.parentNode) {
-                            toast.parentNode.removeChild(toast);
-                        }
-                    }, 300);
-                }, duration);
-
-                return toast;
-            }
-
-            // 加载已保存的 API 配置
-            const savedConfig = loadApiConfig();
-            if (savedConfig) {
-                apiBaseurlInput.value = savedConfig.baseurl || '';
-                apiKeyInput.value = savedConfig.apikey || '';
-            }
-
-            async function initialize() {
-                try {
-                    // 优先从 GitHub 加载故事列表
-                    allStories = [];
-                    useGitHub = false;
-
-                    const githubConfig = GitHubAPI.loadToken();
-                    if (githubConfig) {
-                        try {
-                            const githubAPI = new GitHubAPI(githubConfig.token, githubConfig.username);
-                            allStories = await githubAPI.getStoriesList();
-                            if (allStories && allStories.length > 0) {
-                                useGitHub = true;
-                                console.log('从 GitHub 加载故事列表成功');
-                            }
-                        } catch (error) {
-                            console.warn('从 GitHub 加载失败，尝试本地文件:', error);
-                        }
-                    }
-
-                    // 如果 GitHub 加载失败或没有数据，降级到本地文件
-                    if (!useGitHub) {
-                        console.log('尝试从本地文件加载故事列表');
-                        const response = await fetch('stories.json');
-                        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                        allStories = await response.json();
-                        console.log('从本地文件加载故事列表成功');
-                    }
-
-                    // 初始化时不过滤，显示所有故事
-                    filteredStories = [...allStories];
-
-                    // 渲染故事分组
-                    renderStoryGroups();
-
-                    // 设置搜索功能
-                    storySearchInput.addEventListener('input', (e) => {
-                        filterStories(e.target.value.trim());
-                    });
-
-                    // 显示数据源提示
-                    if (useGitHub) {
-                        console.log('✅ 使用 GitHub 云端故事列表');
-                    } else {
-                        console.log('ℹ️ 使用本地故事列表（降级模式）');
-                    }
-
-                } catch (error) {
-                    console.error('无法加载故事列表:', error);
-                    storyGroupsContainer.innerHTML = `<div class="text-red-600 p-4">加载故事列表失败：${error.message}</div>`;
-                }
-            }
-
-            // 键盘导航支持
-            document.addEventListener('keydown', (e) => {
-                // 如果焦点在搜索框中，不处理箭头键
-                if (document.activeElement === storySearchInput) {
-                    if (e.key === 'Escape') {
-                        storySearchInput.blur();
-                        storySearchInput.value = '';
-                        filterStories('');
-                    }
-                    return;
-                }
-
-                const storyItems = Array.from(document.querySelectorAll('.story-list-item:not([style*="display: none"])'));
-                const currentActive = document.querySelector('.story-list-item.active');
-
-                if (storyItems.length === 0) return;
-
-                let currentIndex = storyItems.indexOf(currentActive);
-
-                if (e.key === 'ArrowDown') {
-                    e.preventDefault();
-                    const nextIndex = currentIndex < 0 ? 0 : Math.min(currentIndex + 1, storyItems.length - 1);
-                    storyItems[nextIndex].click();
-                    storyItems[nextIndex].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-                } else if (e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    const prevIndex = currentIndex < 0 ? 0 : Math.max(currentIndex - 1, 0);
-                    storyItems[prevIndex].click();
-                    storyItems[prevIndex].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-                } else if (e.key === 'Escape') {
-                    // 关闭模态框
-                    hideModal(aiGenerateModal);
-                    hideModal(aiSettingsModal);
-                    hideModal(githubSettingsModal);
-                }
-            });
-
-            // 渲染故事分组
-            function renderStoryGroups() {
-                // 清空容器
-                storyGroupsContainer.innerHTML = '';
-
-                // 创建分组
-                const originalStories = allStories.filter(story => !story.file.startsWith('ai_generated_story_'));
-                const aiGeneratedStories = allStories.filter(story => story.file.startsWith('ai_generated_story_'));
-
-                // 渲染原创故事分组
-                if (originalStories.length > 0) {
-                    renderStoryGroup('📚 原创故事', originalStories, 'original', true);
-                }
-
-                // 渲染AI生成故事分组（默认折叠）
-                if (aiGeneratedStories.length > 0) {
-                    renderStoryGroup('🤖 AI生成故事', aiGeneratedStories, 'ai', false);
-                }
-
-                // 如果没有故事，显示提示
-                if (allStories.length === 0) {
-                    storyGroupsContainer.innerHTML = `
-                        <div class="no-search-results">
-                            <p>暂无故事，请生成新故事</p>
-                        </div>
-                    `;
-                }
-            }
-
-            // 渲染单个分组
-            function renderStoryGroup(title, stories, groupId, isExpanded) {
-                const groupElement = document.createElement('div');
-                groupElement.className = 'story-group';
-
-                const groupCount = stories.length;
-                const isCollapsed = !isExpanded;
-
-                groupElement.innerHTML = `
-                    <div class="story-group-header" data-group="${groupId}">
-                        <div class="story-group-title">
-                            <span>${title}</span>
-                            <span class="story-group-count">${groupCount}</span>
-                        </div>
-                        <span class="story-group-toggle ${isCollapsed ? 'collapsed' : 'expanded'}">▼</span>
-                    </div>
-                    <div class="story-group-content ${isCollapsed ? 'collapsed' : ''}">
-                        <ul class="story-group-list">
-                            ${stories.map(story => {
-                                const isCloud = useGitHub && story.file.startsWith('ai_generated_story_');
-                                const cloudIcon = isCloud ? ' ☁️' : '';
-                                return `<li>
-                                    <a href="#" class="block p-3 story-list-item" data-story-file="${story.file}">
-                                        ${story.title}${cloudIcon}
-                                    </a>
-                                </li>`;
-                            }).join('')}
-                        </ul>
-                    </div>
-                `;
-
-                storyGroupsContainer.appendChild(groupElement);
-
-                // 添加分组点击事件
-                const header = groupElement.querySelector('.story-group-header');
-                const content = groupElement.querySelector('.story-group-content');
-                const toggle = groupElement.querySelector('.story-group-toggle');
-
-                header.addEventListener('click', () => {
-                    const isCurrentlyCollapsed = content.classList.contains('collapsed');
-                    if (isCurrentlyCollapsed) {
-                        content.classList.remove('collapsed');
-                        toggle.classList.remove('collapsed');
-                        toggle.classList.add('expanded');
-                    } else {
-                        content.classList.add('collapsed');
-                        toggle.classList.remove('expanded');
-                        toggle.classList.add('collapsed');
-                    }
-                });
-
-                // 添加故事项点击事件
-                groupElement.querySelectorAll('.story-list-item').forEach(item => {
-                    item.addEventListener('click', (event) => {
-                        event.preventDefault();
-
-                        // 移除其他活跃状态
-                        document.querySelectorAll('.story-list-item').forEach(i => i.classList.remove('active'));
-
-                        // 添加活跃状态
-                        item.classList.add('active');
-
-                        // 加载故事
-                        const storyFile = item.dataset.storyFile;
-                        loadStory(storyFile, useGitHub);
-                    });
-                });
-            }
-
-            // 搜索过滤功能
-            function filterStories(keyword) {
-                if (!keyword) {
-                    // 如果没有关键词，显示所有故事
-                    filteredStories = [...allStories];
-                } else {
-                    // 过滤故事
-                    const lowerKeyword = keyword.toLowerCase();
-                    filteredStories = allStories.filter(story =>
-                        story.title.toLowerCase().includes(lowerKeyword)
-                    );
-                }
-
-                // 重新渲染分组
-                renderFilteredGroups();
-            }
-
-            // 渲染过滤后的分组
-            function renderFilteredGroups() {
-                // 清空容器
-                storyGroupsContainer.innerHTML = '';
-
-                // 创建分组
-                const filteredOriginal = filteredStories.filter(story => !story.file.startsWith('ai_generated_story_'));
-                const filteredAi = filteredStories.filter(story => story.file.startsWith('ai_generated_story_'));
-
-                // 渲染原创故事分组（如果有关键词或原有故事不为空）
-                if (filteredOriginal.length > 0 || (!storySearchInput.value.trim() && allStories.filter(s => !s.file.startsWith('ai_generated_story_')).length > 0)) {
-                    renderStoryGroup('📚 原创故事', filteredOriginal, 'original', true);
-                }
-
-                // 渲染AI生成故事分组（默认折叠）
-                if (filteredAi.length > 0 || (!storySearchInput.value.trim() && allStories.filter(s => s.file.startsWith('ai_generated_story_')).length > 0)) {
-                    const aiGroupExpanded = allStories.filter(s => !s.file.startsWith('ai_generated_story_')).length === 0;
-                    renderStoryGroup('🤖 AI生成故事', filteredAi, 'ai', aiGroupExpanded);
-                }
-
-                // 如果没有匹配结果，显示提示
-                if (filteredStories.length === 0 && allStories.length > 0) {
-                    storyGroupsContainer.innerHTML = `
-                        <div class="no-search-results">
-                            <p>未找到匹配的故事</p>
-                        </div>
-                    `;
-                }
-            }
-
-            async function loadStory(fileName, useGitHub = false) {
-                storyContentElement.style.opacity = 0;
-
-                // Show loading indicator after a short delay
-                const loadingTimeout = setTimeout(() => {
-                    const sourceText = useGitHub ? '从云端加载故事...' : '正在加载故事...';
-                    storyContentElement.innerHTML = `<div class="flex items-center justify-center h-full"><p class="text-xl text-stone-500 animate-pulse">${sourceText}</p></div>`;
-                    storyContentElement.style.opacity = 1;
-                }, 200);
-
-                try {
-                    let markdownContent = '';
-
-                    if (useGitHub) {
-                        // 从 GitHub 加载故事
-                        const githubConfig = GitHubAPI.loadToken();
-                        if (githubConfig) {
-                            try {
-                                const githubAPI = new GitHubAPI(githubConfig.token, githubConfig.username);
-                                const fileData = await githubAPI.getFile(`story/${fileName}`);
-                                if (fileData) {
-                                    markdownContent = fileData.content;
-                                } else {
-                                    throw new Error('故事文件不存在');
-                                }
-                            } catch (error) {
-                                console.warn('从 GitHub 加载失败，尝试本地文件:', error);
-                                // 降级到本地文件
-                                const response = await fetch(`story/${fileName}`);
-                                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                                markdownContent = await response.text();
-                            }
-                        } else {
-                            // 没有 GitHub 配置，降级到本地文件
-                            const response = await fetch(`story/${fileName}`);
-                            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                            markdownContent = await response.text();
-                        }
-                    } else {
-                        // 从本地加载故事
-                        const response = await fetch(`story/${fileName}`);
-                        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                        markdownContent = await response.text();
-                    }
-
-                    // 提取第一行为标题，第二行为副标题
-                    const lines = markdownContent.split('\n');
-                    const title = lines[0].replace(/^#\s*/, '');
-                    const subtitle = lines[1];
-                    const body = lines.slice(2).join('\n');
-
-                    clearTimeout(loadingTimeout);
-
-                    setTimeout(() => {
-                        const cloudBadge = useGitHub ? '<span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">☁️ 云端故事</span>' : '';
-                        const storyHTML = `
-                            <header class="story-header">
-                                <div class="flex items-center justify-between">
-                                    <h1 class="story-title">${title}</h1>
-                                    ${cloudBadge}
-                                </div>
-                                <p class="story-subtitle">${subtitle}</p>
-                            </header>
-                            <main>
-                                <div class="story-body">${marked.parse(body)}</div>
-                            </main>
-                        `;
-                        storyContentElement.innerHTML = storyHTML;
-                        storyContentElement.style.opacity = 1;
-                    }, 50);
-
-                } catch (error) {
-                    clearTimeout(loadingTimeout);
-                    console.error('加载故事时出错:', error);
-                    storyContentElement.innerHTML = `<div class="text-red-600">加载故事失败：${error.message}<br><small>请检查网络连接或稍后重试</small></div>`;
-                    storyContentElement.style.opacity = 1;
-                }
-            }
-
-            initialize();
-
-            // 提示词模板点击事件
-            document.querySelectorAll('.prompt-template').forEach(button => {
-                button.addEventListener('click', () => {
-                    const prompt = button.getAttribute('data-prompt');
-                    storyPromptInput.value = prompt;
-                    storyPromptInput.focus();
-                });
-            });
-
-            // ============ AI 功能事件监听器 ============
-
-            // AI 生成按钮点击
-            aiGenerateBtn.addEventListener('click', async () => {
-                const config = loadApiConfig();
-                if (!config || !config.baseurl || !config.apikey) {
-                    showModal(aiSettingsModal);
-                } else {
-                    // 打开模态框前先刷新模型列表并恢复选择
-                    try {
-                        modelSelect.innerHTML = '<option value="">加载中...</option>';
-                        const models = await fetchModels();
-
-                        if (models.length === 0) {
-                            modelSelect.innerHTML = '<option value="">未找到可用模型</option>';
-                        } else {
-                            modelSelect.innerHTML = '';
-                            models.forEach(model => {
-                                const option = document.createElement('option');
-                                option.value = model.id;
-                                option.textContent = model.id;
-                                modelSelect.appendChild(option);
-                            });
-                            // 恢复之前选择的模型
-                            restoreSelectedModel();
-                        }
-                    } catch (error) {
-                        console.warn('刷新模型列表失败:', error);
-                    }
-                    showModal(aiGenerateModal);
-                }
-            });
-
-            // 设置模态框控制
-            closeSettingsBtn.addEventListener('click', () => hideModal(aiSettingsModal));
-            aiSettingsModal.addEventListener('click', (e) => {
-                if (e.target === aiSettingsModal) hideModal(aiSettingsModal);
-            });
-
-            // ============ GitHub 云存储事件监听器 ============
-
-            // GitHub 设置按钮点击
-            githubSettingsBtn.addEventListener('click', () => {
-                const savedConfig = GitHubAPI.loadToken();
-                if (savedConfig) {
-                    githubUsernameInput.value = savedConfig.username || 'geliya23';
-                    githubTokenInput.value = savedConfig.token || '';
-                }
-                showModal(githubSettingsModal);
-            });
-
-            // GitHub 设置模态框控制
-            closeGithubSettingsBtn.addEventListener('click', () => hideModal(githubSettingsModal));
-            githubSettingsModal.addEventListener('click', (e) => {
-                if (e.target === githubSettingsModal) hideModal(githubSettingsModal);
-            });
-
-            // 保存 GitHub 设置
-            saveGithubSettingsBtn.addEventListener('click', async () => {
-                const username = githubUsernameInput.value.trim();
-                const token = githubTokenInput.value.trim();
-
-                if (!username || !token) {
-                    showToast('请填写完整的 GitHub 信息', 'warning');
-                    return;
-                }
-
-                githubStatusDiv.classList.remove('hidden');
-                githubStatusDiv.innerHTML = '<p class="text-blue-600">正在验证 Token...</p>';
-
-                try {
-                    // 创建 GitHubAPI 实例进行验证
-                    const githubAPI = new GitHubAPI(token, username);
-                    const isValid = await githubAPI.validateToken();
-
-                    if (!isValid) {
-                        githubStatusDiv.innerHTML = '<p class="text-red-600">❌ Token 无效或已过期</p>';
-                        showToast('Token 验证失败，请检查 Token 是否正确', 'error');
-                        return;
-                    }
-
-                    // 验证通过，保存设置
-                    githubAPI.saveToken(token);
-                    githubStatusDiv.innerHTML = '<p class="text-green-600">✅ Token 验证成功</p>';
-
-                    // 检查仓库是否存在
-                    githubStatusDiv.innerHTML = '<p class="text-blue-600">正在检查仓库...</p>';
-                    const repoExists = await githubAPI.checkRepository();
-
-                    if (!repoExists) {
-                        githubStatusDiv.innerHTML = '<p class="text-blue-600">仓库不存在，正在创建...</p>';
-                        try {
-                            await githubAPI.createRepository();
-                            await githubAPI.initializeRepository();
-                            githubStatusDiv.innerHTML = '<p class="text-green-600">✅ 仓库创建成功！</p>';
-                            showToast('GitHub 云存储配置成功！', 'success');
-                        } catch (createError) {
-                            githubStatusDiv.innerHTML = `<p class="text-red-600">❌ 创建仓库失败: ${createError.message}</p>`;
-                            showToast(`创建仓库失败: ${createError.message}`, 'error');
-                        }
-                    } else {
-                        githubStatusDiv.innerHTML = '<p class="text-green-600">✅ 仓库已存在</p>';
-                        showToast('GitHub 云存储配置成功！', 'success');
-                    }
-
-                    // 延迟关闭模态框
-                    setTimeout(() => {
-                        hideModal(githubSettingsModal);
-                    }, 2000);
-
-                } catch (error) {
-                    console.error('GitHub 配置失败:', error);
-                    githubStatusDiv.innerHTML = `<p class="text-red-600">❌ 配置失败: ${error.message}</p>`;
-                    showToast(`GitHub 配置失败: ${error.message}`, 'error');
-                }
-            });
-
-            // 清除 GitHub 设置
-            clearGithubSettingsBtn.addEventListener('click', () => {
-                if (confirm('确定要清除 GitHub 配置吗？')) {
-                    GitHubAPI.clearToken();
-                    githubUsernameInput.value = '';
-                    githubTokenInput.value = '';
-                    githubStatusDiv.classList.add('hidden');
-                    githubStatusDiv.innerHTML = '';
-                    showToast('GitHub 配置已清除', 'info');
-                }
-            });
-
-            // 保存 API 配置
-            saveSettingsBtn.addEventListener('click', () => {
-                const baseurl = apiBaseurlInput.value.trim();
-                const apikey = apiKeyInput.value.trim();
-
-                if (!baseurl || !apikey) {
-                    alert('请填写完整的 API 信息');
-                    return;
-                }
-
-                saveApiConfig(baseurl, apikey);
-                hideModal(aiSettingsModal);
-                showModal(aiGenerateModal);
-            });
-
-            // 清除配置
-            clearSettingsBtn.addEventListener('click', () => {
-                if (confirm('确定要清除 API 配置吗？')) {
-                    clearApiConfig();
-                }
-            });
-
-            // 生成故事模态框控制
-            closeGenerateBtn.addEventListener('click', () => hideModal(aiGenerateModal));
-            cancelBtn.addEventListener('click', () => hideModal(aiGenerateModal));
-            aiGenerateModal.addEventListener('click', (e) => {
-                if (e.target === aiGenerateModal) hideModal(aiGenerateModal);
-            });
-
-            // ============ API 调用函数 ============
-
-            // 获取模型列表
-            async function fetchModels() {
-                const config = loadApiConfig();
-                if (!config) {
-                    alert('请先配置 API');
-                    return;
-                }
-
-                try {
-                    const response = await fetch(`${config.baseurl}/v1/models`, {
-                        headers: {
-                            'Authorization': `Bearer ${config.apikey}`,
-                            'Content-Type': 'application/json'
-                        }
-                    });
-
-                    if (!response.ok) {
-                        throw new Error(`获取模型列表失败: ${response.status}`);
-                    }
-
-                    const data = await response.json();
-                    return data.data || [];
-                } catch (error) {
-                    console.error('获取模型列表失败:', error);
+        // ============ Supabase 配置 ============
+        const SUPABASE_URL = 'https://vvuqvvfwrmjsyybmptgd.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ2dXF2dmZ3cm1qc3l5Ym1wdGdkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIwMTA4MjYsImV4cCI6MjA3NzU4NjgyNn0.sOyVSYOKjmZVo-thtu5ESnQ6OZC0-xuCLA4edn5FPeY';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // ============ 全局变量 ============
+        let allStories = [];
+        let currentStory = null;
+
+        // ============ 工具函数 ============
+
+        // 加载故事列表
+        async function loadStoriesList() {
+            try {
+                const { data, error } = await supabase
+                    .from('stories')
+                    .select('id, title, filename')
+                    .order('id', { ascending: true });
+
+                if (error) {
+                    console.error('从Supabase加载故事列表失败:', error.message);
                     throw error;
                 }
+
+                allStories = data.map(story => ({
+                    title: story.title,
+                    file: story.filename,
+                    id: story.id
+                }));
+
+                console.log(`✅ 成功加载 ${allStories.length} 个故事`);
+                return allStories;
+            } catch (error) {
+                console.error('加载故事列表失败:', error);
+                // 降级到本地文件
+                return await loadStoriesFromLocal();
             }
+        }
 
-            // 刷新模型列表
-            refreshModelsBtn.addEventListener('click', async () => {
-                try {
-                    modelSelect.innerHTML = '<option value="">加载中...</option>';
-                    const models = await fetchModels();
+        // 从本地文件加载（降级方案）
+        async function loadStoriesFromLocal() {
+            try {
+                const response = await fetch('stories.json');
+                allStories = await response.json();
+                console.log(`✅ 从本地文件加载 ${allStories.length} 个故事`);
+                return allStories;
+            } catch (error) {
+                console.error('本地文件加载失败:', error);
+                throw error;
+            }
+        }
 
-                    if (models.length === 0) {
-                        modelSelect.innerHTML = '<option value="">未找到可用模型</option>';
-                        return;
-                    }
+        // 加载故事内容
+        async function loadStoryContent(fileName) {
+            try {
+                const { data, error } = await supabase
+                    .from('stories')
+                    .select('content')
+                    .eq('filename', fileName)
+                    .single();
 
-                    modelSelect.innerHTML = '';
-                    models.forEach(model => {
-                        const option = document.createElement('option');
-                        option.value = model.id;
-                        option.textContent = model.id;
-                        modelSelect.appendChild(option);
-                    });
-
-                    // 恢复之前选择的模型
-                    restoreSelectedModel();
-                } catch (error) {
-                    modelSelect.innerHTML = '<option value="">获取失败，点击重试</option>';
-                    alert('获取模型列表失败: ' + error.message);
+                if (error) {
+                    console.error('从Supabase加载故事内容失败:', error.message);
+                    // 降级到本地文件
+                    const response = await fetch(`story/${fileName}`);
+                    return await response.text();
                 }
+
+                return data.content;
+            } catch (error) {
+                console.error('加载故事内容失败:', error);
+                // 降级到本地文件
+                const response = await fetch(`story/${fileName}`);
+                return await response.text();
+            }
+        }
+
+        // 解析故事内容
+        function parseStoryContent(content) {
+            const lines = content.trim().split('\n');
+            const title = lines[0]?.replace(/^#\s*/, '') || '无标题';
+            const subtitle = lines[1]?.replace(/^##\s*/, '') || '';
+            const body = lines.slice(2).join('\n').trim();
+
+            return { title, subtitle, body };
+        }
+
+        // 渲染故事
+        function renderStory(story) {
+            const contentDiv = document.getElementById('story-content');
+            contentDiv.style.opacity = '0';
+
+            setTimeout(() => {
+                contentDiv.innerHTML = `
+                    <div class="story-header">
+                        <h1 class="story-title">${story.title}</h1>
+                        ${story.subtitle ? `<p class="story-subtitle">${story.subtitle}</p>` : ''}
+                    </div>
+                    <div class="story-body">
+                        ${marked.parse(story.body)}
+                    </div>
+                `;
+                contentDiv.style.opacity = '1';
+            }, 200);
+        }
+
+        // 渲染故事列表
+        function renderStoryList(stories) {
+            const container = document.getElementById('story-groups-container');
+            container.innerHTML = '';
+
+            // 按文件名分组
+            const groups = {};
+            stories.forEach(story => {
+                const letter = story.file.charAt(0).toUpperCase();
+                if (!groups[letter]) {
+                    groups[letter] = [];
+                }
+                groups[letter].push(story);
             });
 
-            // 模型选择改变时保存选择
-            modelSelect.addEventListener('change', (e) => {
-                if (e.target.value) {
-                    saveSelectedModel(e.target.value);
-                }
+            // 渲染每个分组
+            Object.keys(groups).sort().forEach(letter => {
+                const groupStories = groups[letter];
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'story-group';
+
+                groupDiv.innerHTML = `
+                    <div class="story-group-header" onclick="toggleGroup(this)">
+                        <div class="story-group-title">
+                            <span class="chevron">▼</span>
+                            <span>字母 ${letter}</span>
+                        </div>
+                        <span class="story-group-count">${groupStories.length}</span>
+                        </div>
+                    <div class="story-group-content">
+                        <div class="story-group-list">
+                            ${groupStories.map(story => `
+                                <div class="story-list-item p-2 cursor-pointer" onclick="selectStory('${story.file}')">
+                                    ${highlightSearchTerm(story.title)}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(groupDiv);
+            });
+        }
+
+        // 切换分组展开/折叠
+        function toggleGroup(header) {
+            const group = header.parentElement;
+            group.classList.toggle('expanded');
+        }
+
+        // 高亮搜索词
+        function highlightSearchTerm(text) {
+            const searchTerm = document.getElementById('story-search').value.trim();
+            if (!searchTerm) return text;
+
+            const regex = new RegExp(`(${searchTerm})`, 'gi');
+            return text.replace(regex, '<span class="search-highlight">$1</span>');
+        }
+
+        // 选择故事
+        async function selectStory(fileName) {
+            if (currentStory === fileName) return;
+
+            // 更新活跃状态
+            document.querySelectorAll('.story-list-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            currentStory = fileName;
+
+            // 显示加载状态
+            document.getElementById('story-content').innerHTML = `
+                <div class="flex items-center justify-center h-full">
+                    <div class="loading-spinner"></div>
+                </div>
+            `;
+
+            try {
+                const content = await loadStoryContent(fileName);
+                const story = parseStoryContent(content);
+                renderStory(story);
+            } catch (error) {
+                document.getElementById('story-content').innerHTML = `
+                    <div class="error-message">
+                        <strong>加载故事失败</strong>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // 搜索故事
+        function searchStories(term) {
+            const filteredStories = term.trim() === '' ?
+                allStories :
+                allStories.filter(story =>
+                    story.title.toLowerCase().includes(term.toLowerCase())
+                );
+
+            renderStoryList(filteredStories);
+        }
+
+        // 初始化
+        async function initialize() {
+            try {
+                // 隐藏加载指示器
+                document.getElementById('loading-indicator').style.display = 'none';
+
+                // 加载故事列表
+                await loadStoriesList();
+
+                // 渲染故事列表
+                renderStoryList(allStories);
+
+                console.log('✅ 初始化完成');
+            } catch (error) {
+                console.error('初始化失败:', error);
+                document.getElementById('story-groups-container').innerHTML = `
+                    <div class="error-message">
+                        <strong>加载故事失败</strong>
+                        <p>${error.message}</p>
+                        <p class="mt-2 text-sm">请检查网络连接或稍后重试</p>
+                    </div>
+                `;
+            }
+        }
+
+        // 事件监听器
+        document.addEventListener('DOMContentLoaded', () => {
+            // 搜索框事件
+            document.getElementById('story-search').addEventListener('input', (e) => {
+                searchStories(e.target.value);
             });
 
-            // 生成故事
-            generateBtn.addEventListener('click', async () => {
-                const prompt = storyPromptInput.value.trim();
-                const model = modelSelect.value;
-
-                if (!prompt) {
-                    alert('请输入故事提示词');
-                    return;
-                }
-
-                if (!model) {
-                    alert('请选择模型');
-                    return;
-                }
-
-                try {
-                    generateBtn.disabled = true;
-                    generationStatus.classList.remove('hidden');
-                    storyResultTextarea.value = '';
-
-                    const config = loadApiConfig();
-                    const response = await fetch(`${config.baseurl}/v1/chat/completions`, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${config.apikey}`,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            model: model,
-                            messages: [
-                                {
-                                    role: 'system',
-                                    content: '你是一个儿童故事作家。请生成一个童话故事，遵循以下格式：\n第一行是故事标题（以#开头）\n第二行是副标题（一句话概括故事）\n第三行开始是故事正文（至少500字，包含情节发展、高潮和结局）'
-                                },
-                                {
-                                    role: 'user',
-                                    content: prompt
-                                }
-                            ],
-                            stream: false
-                        })
-                    });
-
-                    if (!response.ok) {
-                        throw new Error(`生成失败: ${response.status}`);
-                    }
-
-                    const data = await response.json();
-                    const story = data.choices[0].message.content;
-                    storyResultTextarea.value = story;
-
-                } catch (error) {
-                    console.error('生成故事失败:', error);
-                    alert('生成故事失败: ' + error.message);
-                } finally {
-                    generateBtn.disabled = false;
-                    generationStatus.classList.add('hidden');
-                }
-            });
-
-            // ============ 故事保存功能 ============
-
-            // 保存生成的故事
-            saveStoryBtn.addEventListener('click', async () => {
-                const storyContent = storyResultTextarea.value.trim();
-
-                if (!storyContent) {
-                    alert('没有可保存的故事内容');
-                    return;
-                }
-
-                // 提取标题和内容
-                const lines = storyContent.split('\n').filter(line => line.trim());
-                if (lines.length < 2) {
-                    alert('故事格式不正确');
-                    return;
-                }
-
-                const title = lines[0].replace(/^#\s*/, '');
-                const subtitle = lines[1];
-                const body = lines.slice(2).join('\n');
-
-                if (!title || !subtitle || !body) {
-                    alert('故事必须包含标题、副标题和正文');
-                    return;
-                }
-
-                // 检查 GitHub 配置
-                const githubConfig = GitHubAPI.loadToken();
-                if (!githubConfig) {
-                    showToast('请先配置 GitHub 云存储设置', 'warning');
-                    showModal(githubSettingsModal);
-                    return;
-                }
-
-                // 更新按钮状态
-                const originalButtonText = saveStoryBtn.textContent;
-                saveStoryBtn.disabled = true;
-                saveStoryBtn.textContent = '正在保存到云端...';
-
-                try {
-                    // 创建 GitHub API 实例
-                    const githubAPI = new GitHubAPI(githubConfig.token, githubConfig.username);
-
-                    // 保存故事到 GitHub
-                    const result = await githubAPI.saveStory(title, subtitle, body);
-
-                    // 显示成功消息
-                    const pagesUrl = `https://${githubConfig.username}.github.io/${githubAPI.repoName}/`;
-                    showToast(`故事已成功保存到 GitHub 云端！`, 'success');
-
-                    // 显示详细信息的通知（更长的持续时间）
-                    setTimeout(() => {
-                        showToast(`文件: ${result.fileName}`, 'info', 8000);
-                    }, 500);
-
-                    setTimeout(() => {
-                        showToast(`30秒后可在 GitHub Pages 查看`, 'info', 8000);
-                    }, 1000);
-
-                    // 关闭模态框
-                    hideModal(aiGenerateModal);
-
-                    // 清空表单
-                    storyPromptInput.value = '';
-                    storyResultTextarea.value = '';
-
-                    // 重新加载故事列表以显示新故事
-                    await initialize();
-
-                } catch (error) {
-                    console.error('保存故事失败:', error);
-                    showToast(`保存故事失败: ${error.message}`, 'error');
-                } finally {
-                    // 恢复按钮状态
-                    saveStoryBtn.disabled = false;
-                    saveStoryBtn.textContent = originalButtonText;
-                }
-            });
-
+            // 初始化应用
+            initialize();
         });
     </script>
 </body>
