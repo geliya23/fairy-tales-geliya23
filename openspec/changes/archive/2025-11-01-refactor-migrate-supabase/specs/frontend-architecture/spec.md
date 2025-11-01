@@ -7,76 +7,52 @@ Defines the simplified frontend architecture after removing complex GitHub integ
 - **story-list**: Consumes data from this architecture
 - **data-storage**: Provides data via Supabase that this architecture consumes
 
-## REMOVED Requirements
+## ADDED Requirements
 
-### Requirement: 删除GitHub API模块
-The frontend SHALL not contain GitHub API integration code.
+### Requirement: 简化前端架构
+The frontend SHALL implement a simplified, single-responsibility architecture focused solely on story display.
 
-#### Scenario: 删除GitHubAPI类
-- **GIVEN** 当前的index.html包含GitHubAPI类
-- **WHEN** 执行架构重构
-- **THEN** 必须完全删除GitHubAPI类及其所有方法
-
-#### Scenario: 删除Token管理
-- **GIVEN** 前端包含GitHub Token配置界面
-- **WHEN** 执行架构重构
-- **THEN** 必须删除Token输入、验证和存储相关代码
-
-#### Scenario: 删除仓库管理功能
-- **GIVEN** 前端包含GitHub仓库管理功能
-- **WHEN** 执行架构重构
-- **THEN** 必须删除创建仓库、检查状态等所有仓库操作代码
-
-### Requirement: 删除AI生成模块
-The frontend SHALL not contain AI story generation functionality.
-
-#### Scenario: 删除AI生成界面
-- **GIVEN** 前端包含AI故事生成表单和模态框
-- **WHEN** 执行架构重构
-- **THEN** 必须删除所有AI生成相关的UI组件
-
-#### Scenario: 删除AI服务调用
-- **GIVEN** 前端调用外部AI服务生成故事
-- **WHEN** 执行架构重构
-- **THEN** 必须删除AI服务调用代码和生成逻辑
-
-## MODIFIED Requirements
-
-### Requirement: 单一职责架构
-The frontend SHALL follow single responsibility principle, with each module having a clearly defined purpose.
-
-#### Scenario: 保留核心展示模块
-- **GIVEN** 前端的基本展示功能
-- **WHEN** 执行架构重构
-- **THEN** 必须保留以下核心模块：
+#### Scenario: 核心展示模块
+- **GIVEN** 用户访问网站
+- **WHEN** 页面加载
+- **THEN** 系统MUST提供以下核心模块：
   - 故事列表渲染
   - 故事内容显示
   - 搜索和过滤
   - 分组和折叠功能
   - 响应式布局
 
-#### Scenario: 添加Supabase集成模块
-- **GIVEN** 需要从Supabase加载数据
-- **WHEN** 执行架构重构
-- **THEN** 必须新增以下模块：
+#### Scenario: Supabase集成模块
+- **GIVEN** 需要从数据库加载故事数据
+- **WHEN** 页面初始化
+- **THEN** 系统MUST包含以下组件：
   - Supabase客户端初始化
   - 数据库查询函数
   - 错误处理和降级机制
   - API响应处理
 
+#### Scenario: 无GitHub依赖
+- **GIVEN** 简化的前端架构
+- **WHEN** 代码审查
+- **THEN** 系统MUST NOT包含：
+  - GitHub API集成代码
+  - GitHub Token管理功能
+  - 仓库操作功能
+  - AI生成相关UI或逻辑
+
 ### Requirement: 代码量精简
 The frontend code SHALL be significantly reduced while maintaining all core functionality.
 
 #### Scenario: 代码量目标
-- **GIVEN** 当前index.html文件（1443行）
-- **WHEN** 完成架构重构
-- **THEN** 最终代码量 MUST be approximately 400行
-- **AND** 代码量减少 MUST be at least 72%
+- **GIVEN** 完成架构重构
+- **WHEN** 统计代码行数
+- **THEN** 总代码量 MUST be approximately 400行
+- **AND** 比原有1443行减少至少72%
 
-#### Scenario: 代码组织
+#### Scenario: 代码组织结构
 - **GIVEN** 重构后的代码
-- **WHEN** 分析代码结构
-- **THEN** 代码MUST be分为以下部分：
+- **WHEN** 分析结构
+- **THEN** 代码MUST分为以下部分：
   - HTML结构：~50行
   - CSS样式：~150行
   - JavaScript逻辑：~200行
@@ -94,13 +70,13 @@ The frontend SHALL work without any user configuration or setup.
   - 无需等待或设置
   - 直接开始浏览故事
 
-### Requirement: 简化的数据流
+### Requirement: Supabase数据流
 The frontend SHALL have a simplified data flow from Supabase to UI.
 
 #### Scenario: 数据加载流程
 - **GIVEN** 页面初始化
 - **WHEN** 开始加载数据
-- **THEN** 数据流MUST be：
+- **THEN** 数据流MUST遵循以下步骤：
   1. 初始化Supabase客户端
   2. 调用stories表查询API
   3. 获取故事列表数据
@@ -110,7 +86,7 @@ The frontend SHALL have a simplified data flow from Supabase to UI.
 #### Scenario: 内容加载流程
 - **GIVEN** 用户点击故事项
 - **WHEN** 需要加载故事内容
-- **THEN** 数据流MUST be：
+- **THEN** 数据流MUST遵循以下步骤：
   1. 提取故事的filename
   2. 查询Supabase获取content
   3. 接收Markdown内容
@@ -120,12 +96,12 @@ The frontend SHALL have a simplified data flow from Supabase to UI.
 #### Scenario: 降级流程
 - **GIVEN** Supabase API调用失败
 - **WHEN** 数据加载失败
-- **THEN** 降级流程MUST be：
-  1. 记录错误信息
-  2. 尝试本地文件加载
-  3. 读取story/{filename}
-  4. 处理文件内容
-  5. 正常显示（带降级提示）
+- **THEN** 系统MUST自动切换到本地文件：
+  1. 记录错误信息到Console
+  2. 尝试从stories.json加载列表
+  3. 读取story/{filename}文件
+  4. 正常显示内容
+  5. 显示降级提示
 
 ### Requirement: 错误处理优化
 The frontend SHALL provide clear, user-friendly error messages without exposing technical details.
@@ -149,50 +125,50 @@ The frontend SHALL provide clear, user-friendly error messages without exposing 
   - 保持页面可交互状态
 
 ### Requirement: 保持现有功能
-The frontend SHALL maintain all current user-facing features during the refactoring.
+The frontend SHALL maintain all current user-facing features.
 
 #### Scenario: 搜索功能保持
-- **GIVEN** 用户依赖现有搜索功能
-- **WHEN** 执行架构重构
-- **THEN** 搜索功能MUST be：
-  - 行为完全一致
+- **GIVEN** 用户使用搜索功能
+- **WHEN** 输入关键词
+- **THEN** 搜索功能MUST：
+  - 行为与原功能完全一致
   - 性能不降低
   - UI外观不变
   - 支持中英文关键词
 
 #### Scenario: 分组显示保持
-- **GIVEN** 故事按来源分组显示
-- **WHEN** 执行架构重构
-- **THEN** 分组功能MUST be：
-  - 逻辑完全一致（AI生成 vs 原创）
+- **GIVEN** 故事列表显示
+- **WHEN** 加载完成
+- **THEN** 分组功能MUST：
+  - 逻辑与原功能一致（AI生成 vs 原创）
   - 分组标题不变
   - 折叠/展开行为不变
-  - 默认状态不变
+  - 默认状态不变（原创展开，AI折叠）
 
 #### Scenario: 响应式设计保持
 - **GIVEN** 网站在不同设备上使用
-- **WHEN** 执行架构重构
-- **THEN** 响应式布局MUST be：
+- **WHEN** 访问网站
+- **THEN** 响应式布局MUST：
   - 在所有设备上正常工作
   - 断点设置不变
   - 移动端体验不降低
   - 触摸交互正常
 
 #### Scenario: 视觉设计保持
-- **GIVEN** 当前的视觉风格和主题
-- **WHEN** 执行架构重构
-- **THEN** 视觉设计MUST be：
-  - 颜色方案不变
-  - 字体设置不变
-  - 动画效果不变
+- **GIVEN** 当前的视觉风格
+- **WHEN** 重构完成后
+- **THEN** 视觉设计MUST：
+  - 颜色方案保持不变
+  - 字体设置保持不变
+  - 动画效果保持不变
   - 整体风格保持一致
 
 ### Requirement: 性能优化
 The frontend SHALL be optimized for fast loading and smooth interactions.
 
-#### Scenario: 减少HTTP请求
-- **GIVEN** 重构前多次API调用
-- **WHEN** 优化数据加载
+#### Scenario: 优化HTTP请求
+- **GIVEN** 重构后的数据加载
+- **WHEN** 页面访问
 - **THEN** 系统MUST：
   - 合并故事列表查询（一次性获取）
   - 按需加载故事内容（点击时加载）
@@ -200,55 +176,30 @@ The frontend SHALL be optimized for fast loading and smooth interactions.
 
 #### Scenario: 客户端过滤
 - **GIVEN** 用户输入搜索关键词
-- **WHEN** 执行搜索功能
+- **WHEN** 执行搜索
 - **THEN** 系统MUST：
   - 在客户端执行过滤（不使用API）
-  - 响应时间 MUST be < 500ms
+  - 响应时间 < 500ms
   - 支持实时搜索（无延迟）
 
-## ADDED Requirements
+#### Scenario: Supabase集成
+- **GIVEN** 需要从Supabase加载数据
+- **WHEN** 初始化客户端
+- **THEN** 系统MUST：
+  - 使用CDN引入的Supabase JavaScript客户端
+  - 配置正确的URL和anon key
+  - 封装Supabase API调用
+  - 统一错误处理机制
 
-### Requirement: Supabase集成
-The frontend SHALL integrate with Supabase for data retrieval.
-
-#### Scenario: 客户端初始化
-- **GIVEN** 页面加载时
-- **WHEN** 初始化Supabase客户端
-- **THEN** 必须使用CDN引入的Supabase JavaScript客户端
-- **AND** 配置正确的URL和anon key
-- **AND** 创建客户端实例供后续使用
-
-#### Scenario: 数据查询封装
-- **GIVEN** 需要查询故事列表
-- **WHEN** 调用查询函数
-- **THEN** 必须封装Supabase API调用
-- **AND** 处理查询参数和排序
-- **AND** 统一错误处理
-- **AND** 返回标准格式的数据
-
-### Requirement: 降级保护
-The frontend SHALL provide fallback to local files when Supabase is unavailable.
-
-#### Scenario: 降级触发
-- **GIVEN** Supabase API调用失败
-- **WHEN** 网络错误、超时或服务不可用
-- **THEN** 系统MUST自动切换到本地文件
-- **AND** 不中断用户浏览体验
-- **AND** 在Console记录降级日志
-
-#### Scenario: 降级数据源
-- **GIVEN** 使用降级方案
-- **WHEN** 加载故事列表
-- **THEN** 必须从本地stories.json加载
-- **AND** 格式与Supabase数据保持一致
-- **AND** 保持分组和搜索功能
-
-#### Scenario: 降级内容加载
-- **GIVEN** 使用降级方案
-- **WHEN** 加载故事内容
-- **THEN** 必须从本地story/{filename}.md加载
-- **AND** 路径格式保持一致
-- **AND** 内容格式保持一致
+#### Scenario: 降级保护机制
+- **GIVEN** Supabase不可用
+- **WHEN** API调用失败
+- **THEN** 系统MUST：
+  - 自动切换到本地文件
+  - 从stories.json加载列表
+  - 从story/{filename}.md加载内容
+  - 在Console记录降级日志
+  - 不中断用户浏览体验
 
 ## Performance Requirements
 
