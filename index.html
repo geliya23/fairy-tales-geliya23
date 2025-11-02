@@ -228,6 +228,34 @@
                         <div class="loading-spinner"></div>
                         <p class="text-stone-600 mt-2">正在加载故事...</p>
                     </div>
+
+                    <!-- 热门故事区域 -->
+                    <div id="popular-stories-section" class="mt-6 mb-4" style="display: none;">
+                        <h3 class="text-lg font-bold text-stone-700 mb-3 flex items-center">
+                            <span class="mr-2">🔥</span>
+                            <span>热门故事</span>
+                        </h3>
+                        <div id="popular-stories-list" class="space-y-2"></div>
+                    </div>
+
+                    <!-- AI 故事生成区域 -->
+                    <div id="ai-generation-section" class="mt-6 mb-4">
+                        <h3 class="text-lg font-bold text-stone-700 mb-3">✨ AI 故事生成</h3>
+                        <div class="space-y-2">
+                            <textarea id="ai-prompt" class="w-full px-3 py-2 border border-stone-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm" rows="3" placeholder="输入故事创意，例如：一只勇敢的小老鼠的冒险..."></textarea>
+                            <button id="generate-story-btn" class="w-full bg-amber-600 text-white px-4 py-2 rounded-md hover:bg-amber-700 transition-colors text-sm font-medium">
+                                🚀 生成故事
+                            </button>
+                            <div id="generation-status" class="text-sm text-stone-600 text-center" style="display: none;"></div>
+                        </div>
+                    </div>
+
+                    <!-- 管理后台入口 -->
+                    <div id="admin-section" class="mt-6 mb-4">
+                        <a href="admin.html" class="block w-full text-center bg-stone-700 text-white px-4 py-2 rounded-md hover:bg-stone-800 transition-colors text-sm font-medium">
+                            🔧 管理后台
+                        </a>
+                    </div>
                 </div>
             </aside>
 
@@ -252,6 +280,7 @@
         // ============ 全局变量 ============
         let allStories = [];
         let currentStory = null;
+        let currentStoryId = null;
 
         // ============ 工具函数 ============
 
@@ -296,12 +325,174 @@
             }
         }
 
+        // ============ 阅读追踪功能 ============
+
+        // 生成或获取用户标识
+        function getUserId() {
+            let userId = localStorage.getItem('user_id');
+            if (!userId) {
+                userId = 'user_' + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('user_id', userId);
+            }
+            return userId;
+        }
+
+        // 追踪故事阅读事件
+        async function trackStoryRead(storyId) {
+            try {
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/analytics-track`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    },
+                    body: JSON.stringify({
+                        story_id: storyId,
+                        user_identifier: getUserId(),
+                        user_agent: navigator.userAgent,
+                        referrer: document.referrer
+                    })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    console.log('✅ 阅读事件已记录 (ID:', result.data.id, ')');
+                }
+            } catch (error) {
+                console.error('追踪阅读事件失败:', error);
+                // 不阻断用户体验，静默失败
+            }
+        }
+
+        // ============ 热门故事功能 ============
+
+        // 加载热门故事
+        async function loadPopularStories() {
+            try {
+                const response = await fetch(
+                    `${SUPABASE_URL}/functions/v1/analytics-summary?period=7d&limit=5`,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                        }
+                    }
+                );
+
+                const result = await response.json();
+                if (result.success && result.data.top_stories.length > 0) {
+                    renderPopularStories(result.data.top_stories);
+                    document.getElementById('popular-stories-section').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('加载热门故事失败:', error);
+                // 静默失败，不影响用户体验
+            }
+        }
+
+        // 渲染热门故事
+        function renderPopularStories(popularStories) {
+            const container = document.getElementById('popular-stories-list');
+            container.innerHTML = '';
+
+            popularStories.forEach(story => {
+                const storyElement = document.createElement('div');
+                storyElement.className = 'story-list-item cursor-pointer p-2 bg-amber-50 hover:bg-amber-100 rounded-md transition-colors';
+                storyElement.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm font-medium text-stone-700">${story.title}</span>
+                        <span class="text-xs text-amber-600 flex items-center">
+                            <span class="mr-1">👁</span>
+                            ${story.read_count}
+                        </span>
+                    </div>
+                `;
+                storyElement.onclick = () => {
+                    // 找到对应的故事文件
+                    const storyData = allStories.find(s => s.id === story.id);
+                    if (storyData) {
+                        selectStory(storyData.file);
+                    }
+                };
+                container.appendChild(storyElement);
+            });
+        }
+
+        // ============ AI 故事生成功能 ============
+
+        // 生成 AI 故事
+        async function generateAIStory() {
+            const promptInput = document.getElementById('ai-prompt');
+            const generateBtn = document.getElementById('generate-story-btn');
+            const statusDiv = document.getElementById('generation-status');
+
+            const prompt = promptInput.value.trim();
+            if (!prompt) {
+                alert('请输入故事创意！');
+                return;
+            }
+
+            // 显示加载状态
+            generateBtn.disabled = true;
+            generateBtn.innerHTML = '⏳ 生成中...';
+            statusDiv.style.display = 'block';
+            statusDiv.innerHTML = '正在使用 AI 生成故事，请稍候...';
+
+            try {
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/generate-story`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        model: 'gpt-3.5-turbo',
+                        temperature: 0.8
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    statusDiv.innerHTML = '✅ 故事生成成功！正在加载...';
+
+                    // 重新加载故事列表
+                    await loadStoriesList();
+                    renderStoryList(allStories);
+
+                    // 加载生成的故事
+                    const newStory = allStories.find(s => s.id === result.data.id);
+                    if (newStory) {
+                        selectStory(newStory.file);
+                    }
+
+                    // 清空输入
+                    promptInput.value = '';
+                    statusDiv.innerHTML = '✅ 新故事已添加到列表！';
+
+                    setTimeout(() => {
+                        statusDiv.style.display = 'none';
+                    }, 3000);
+                } else {
+                    throw new Error(result.error?.message || '生成失败');
+                }
+            } catch (error) {
+                console.error('生成 AI 故事失败:', error);
+                statusDiv.innerHTML = `❌ 生成失败: ${error.message}`;
+                statusDiv.className = 'text-sm text-red-600 text-center';
+            } finally {
+                // 恢复按钮状态
+                generateBtn.disabled = false;
+                generateBtn.innerHTML = '🚀 生成故事';
+            }
+        }
+
         // 加载故事内容
         async function loadStoryContent(fileName) {
             try {
                 const { data, error } = await supabase
                     .from('stories')
-                    .select('content')
+                    .select('content, id')
                     .eq('filename', fileName)
                     .single();
 
@@ -312,6 +503,8 @@
                     return await response.text();
                 }
 
+                // 记录故事ID用于追踪
+                currentStoryId = data.id;
                 return data.content;
             } catch (error) {
                 console.error('加载故事内容失败:', error);
@@ -417,7 +610,9 @@
             document.querySelectorAll('.story-list-item').forEach(item => {
                 item.classList.remove('active');
             });
-            event.target.classList.add('active');
+            if (event && event.target) {
+                event.target.classList.add('active');
+            }
 
             currentStory = fileName;
 
@@ -432,6 +627,11 @@
                 const content = await loadStoryContent(fileName);
                 const story = parseStoryContent(content);
                 renderStory(story);
+
+                // 追踪阅读事件
+                if (currentStoryId) {
+                    await trackStoryRead(currentStoryId);
+                }
             } catch (error) {
                 document.getElementById('story-content').innerHTML = `
                     <div class="error-message">
@@ -465,6 +665,9 @@
                 // 渲染故事列表
                 renderStoryList(allStories);
 
+                // 加载热门故事
+                await loadPopularStories();
+
                 console.log('✅ 初始化完成');
             } catch (error) {
                 console.error('初始化失败:', error);
@@ -483,6 +686,20 @@
             // 搜索框事件
             document.getElementById('story-search').addEventListener('input', (e) => {
                 searchStories(e.target.value);
+            });
+
+            // AI 故事生成按钮事件
+            document.getElementById('generate-story-btn').addEventListener('click', (e) => {
+                e.preventDefault();
+                generateAIStory();
+            });
+
+            // 回车生成故事
+            document.getElementById('ai-prompt').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                    e.preventDefault();
+                    generateAIStory();
+                }
             });
 
             // 初始化应用

@@ -4,7 +4,21 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "db:backup": "node backup-database.js",
+    "db:verify": "node verify-simple.js",
+    "db:verify-full": "node verify-database.js",
+    "db:test": "node test-database.js",
+    "db:setup": "node -e \"console.log('\\n1. 打开 Supabase Dashboard\\n2. 进入 SQL Editor\\n3. 运行 create-story-reads-table.sql\\n4. 然后运行: npm run db:verify\\n')\""
+  },
+  "openSpec": {
+    "changeId": "enhance-ai-edge-analytics-admin",
+    "phase": "phase-1-database-extension",
+    "tasks": {
+      "total": 8,
+      "completed": 8,
+      "status": "completed"
+    }
   },
   "repository": {
     "type": "git",
